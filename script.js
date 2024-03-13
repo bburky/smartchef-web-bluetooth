@@ -1,5 +1,3 @@
-var myCharacteristic;
-
 const SCALE_SERVICE_UUID = 0xfff0;
 const SCALE_CHARACTERISTIC_UUID = 0xfff1;
 
@@ -18,10 +16,9 @@ const UNITS = {
 };
 
 
+const output = document.getElementById("output");
 const connectButton = document.getElementById("connect");
 connectButton.addEventListener("click", onConnectButtonClick);
-
-const output = document.getElementById("output");
 
 let device;
 let server;
@@ -32,7 +29,7 @@ function log(s) {
 
 function protocolError() {
   disconnect();
-  alert("Protocol error, unprocessable data received from device. This may be an incompatible model of bluetooth scale?");
+  alert("Protocol Error: Received unprocessable data from device\n\nThis may be an incompatible model of bluetooth scale?");
   throw new Error("Protocol Error");
 }
 
