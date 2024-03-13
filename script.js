@@ -72,10 +72,12 @@ async function connect() {
     currentDevice = await navigator.bluetooth.requestDevice({
       filters: [
         {
-          namePrefix: "Chipsea-BLE",
+          // 500g Smart Chef Smart Food Scale
+          namePrefix: "smartchef",
         },
         {
-          namePrefix: "smartchef",
+          // 3000g Smart Chef Smart Food Scale
+          namePrefix: "Chipsea-BLE",
         },
       ],
       optionalServices: [SCALE_SERVICE_UUID],

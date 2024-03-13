@@ -1,6 +1,15 @@
+body {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
 #output {
   color: #666;
   font-style: italic;
+  width: 100%;
+  text-align: center;
+  font-size: 72px;
 }
 
 #output.locked {
