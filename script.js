@@ -73,7 +73,7 @@ function handleNotifications(event) {
   const {
     0: magic,
     1: protocolVersion,
-    3: messageBodyProperties, // This may be "device type", but it seems to decode according to Table 1
+    3: attributes, // This may be "device type", but it seems to decode according to Table 1
     5: weightMSB,
     6: weightLSB,
   } = value;
@@ -88,8 +88,13 @@ function handleNotifications(event) {
     // trace("ScaleClient: invalid checksum\n");
     return;
   }
-  const decimals = DECIMALS[messageBodyProperties & 0b110];
+  const sign = attributes & 0b1000000 ? -1 : 1;
+  const locked = attributes & 0b1;
+  const decimals = sign * DECIMALS[attributes & 0b110];
   const weight = (((weightMSB << 8) + weightLSB) / 10**decimals).toFixed(decimals);
+
+  console.log((attributes & 0b01111000).toString(2));
   
   output.textContent = weight;
+  output.className = locked ? 'locked' : '';
 }

@@ -1,7 +1,10 @@
 #output {
-  background: black;
-  min-width: 5em;
-  height: 3em;
+  color: #666;
+/*   font-style: italic; */
+}
+
+#output.locked {
+  color: #000;
 }
 
 
