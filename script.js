@@ -29,9 +29,9 @@ async function onConnectButtonClick() {
 }
 
 
-async function connect() {
+async function connect(connectingMessage = "Connecting...") {
   try {
-    connectButton.textContent = "Connecting..."
+    connectButton.textContent = connectingMessage;
     
     device = await navigator.bluetooth.requestDevice({
       filters: [
@@ -42,34 +42,41 @@ async function connect() {
       optionalServices: [SCALE_SERVICE_UUID],
     });
     device.addEventListener('gattserverdisconnected', onDisconnected);
-
     server = await device.gatt.connect();
+
     const service = await server.getPrimaryService(SCALE_SERVICE_UUID);
+
     myCharacteristic = await service.getCharacteristic(
       SCALE_CHARACTERISTIC_UUID
     );
-
-    await myCharacteristic.startNotifications();
-
-    log("> Notifications started");
     myCharacteristic.addEventListener(
       "characteristicvaluechanged",
       handleNotifications
     );
-    connectButton.textContent = "Disconnect"
+    await myCharacteristic.startNotifications();
+
+    connectButton.textContent = "Disconnect";
   } catch (error) {
     log("Argh! " + error);
-    connectButton.textContent = "Connect"
+    connectButton.textContent = "Connect";
   }
 }
 
 function disconnect() {
   if (device.gatt.connected) {
-    device.gatt.disconnect();
+    // Clear device variable to block automatic reconnection
+    const deviceToDisconnect = device;
+    device = null;
+    deviceToDisconnect.gatt.disconnect();
   }
 }
   
 async function onDisconnected() {
+  if (device) {
+    for (let i = 0; i < 3; i++) {
+      
+    }
+  }
   device = null;
   server = null;
   connectButton.textContent = "Connect";
@@ -92,10 +99,10 @@ async function onStopButtonClick() {
 
 function handleNotifications(event) {
   let value = new Uint8Array(event.target.value.buffer);
-  let a = [];
 
   // Based on https://github.com/oliexdev/openScale/issues/496
-  // and https://raw.githubusercontent.com/mxiaoguang/chipsea-ble-lib/master/%E8%8A%AF%E6%B5%B7%E8%93%9D%E7%89%99%E7%A7%A4%E4%BA%91%E7%AB%AF%E7%89%88%E9%80%9A%E8%AE%AF%E5%8D%8F%E8%AE%AE%20v3.pdf
+  // https://github.com/oliexdev/openScale/files/5224454/OKOK.Protocol.pdf  
+  // https://raw.githubusercontent.com/mxiaoguang/chipsea-ble-lib/master/%E8%8A%AF%E6%B5%B7%E8%93%9D%E7%89%99%E7%A7%A4%E4%BA%91%E7%AB%AF%E7%89%88%E9%80%9A%E8%AE%AF%E5%8D%8F%E8%AE%AE%20v3.pdf
   
   const {
     0: magic,
@@ -120,6 +127,7 @@ function handleNotifications(event) {
   const decimals = sign * DECIMALS[attributes & 0b110];
   const weight = (((weightMSB << 8) + weightLSB) / 10**decimals).toFixed(decimals);
 
+  // todo
   console.log((attributes & 0b01111000).toString(2));
   
   output.textContent = weight;
