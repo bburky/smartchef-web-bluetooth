@@ -18,6 +18,12 @@ const UNITS = {
 };
 
 
+class Cancelled extends Error {
+  constructor(message = "", ...args) {
+    super(message, ...args);
+    this.message = "Cancelled " + message;
+  }
+}
 
 const connectButton = document.getElementById("connect");
 connectButton.addEventListener("click", onConnectButtonClick);
@@ -54,8 +60,12 @@ async function onConnectButtonClick() {
 }
 
 async function connect() {
-  if (!device) {
-    device = await navigator.bluetooth.requestDevice({
+  let currentDevice;
+
+  if (device) {
+    currentDevice = device;
+  } else {
+    currentDevice = await navigator.bluetooth.requestDevice({
       filters: [
         {
           namePrefix: "Chipsea-BLE",
@@ -66,21 +76,23 @@ async function connect() {
       ],
       optionalServices: [SCALE_SERVICE_UUID],
     });
-    device.addEventListener("gattserverdisconnected", onDisconnected);
+    currentDevice.addEventListener("gattserverdisconnected", onDisconnected);
+    device = currentDevice;
   }
 
-  newServer = await device.gatt.connect();
+  const newServer = await currentDevice.gatt.connect();
   // It's impossible to cancel the connect() call, the browser will attempt to reconnect forever
   // Therefore this app will abandon calls to connect sometimes, but that means that two will run in parallel
   // Detect if an abandoned connect() succeeds and throw an error to indicate it was cancelled
   if (server) {
-    throw new Error("cancelled");
+    throw new Cancelled();
+    currentDevice.gatt.disconnect();
   }
   server = newServer;
 
   const service = await server.getPrimaryService(SCALE_SERVICE_UUID);
 
-  characteristic = await service.getCharacteristic(SCALE_CHARACTERISTIC_UUID);
+  const characteristic = await service.getCharacteristic(SCALE_CHARACTERISTIC_UUID);
   characteristic.addEventListener(
     "characteristicvaluechanged",
     handleNotifications
@@ -91,9 +103,10 @@ async function connect() {
 function disconnect() {
   if (device.gatt.connected) {
     // Clear device variable to block automatic reconnection
-    const deviceToDisconnect = device;
+    const currentDevice = device;
     device = null;
-    deviceToDisconnect.gatt.disconnect();
+
+    currentDevice.gatt.disconnect();
   }
 }
 
@@ -106,6 +119,9 @@ async function onDisconnected() {
       connectButton.textContent = "Disconnect";
       return;
     } catch (error) {
+      if (error instanceof Cancelled) {
+        return;          
+      }
       log("Argh! " + error);
     }
   }
