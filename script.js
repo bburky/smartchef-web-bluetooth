@@ -1,44 +1,40 @@
 var myCharacteristic;
 
-const SCALE_SERVICE_UUID = uuid`FFF0`;
-const SCALE_CHARACTERISTIC_UUID = uuid`FFF1`;
+const SCALE_SERVICE_UUID = 0xFFF0;
+const SCALE_CHARACTERISTIC_UUID = 0xFFF1;
+
+function log(s) {
+  document.write(s);
+}
+
+document.getElementById("start").addEventListener("click", onStartButtonClick);
+document.getElementById("stop").addEventListener("click", onStopButtonClick);
 
 async function onStartButtonClick() {
-  let serviceUuid = document.querySelector('#service').value;
-  if (serviceUuid.startsWith('0x')) {
-    serviceUuid = parseInt(serviceUuid);
-  }
-
-  let characteristicUuid = document.querySelector('#characteristic').value;
-  if (characteristicUuid.startsWith('0x')) {
-    characteristicUuid = parseInt(characteristicUuid);
-  }
-
   try {
-    log('Requesting Bluetooth Device...');
-    const device = await device = navigator.bluetooth.requestDevice({
-    filters: {
-      namePrefix: "Chipsea-BLE"
-    }
-  });
+    const device = await navigator.bluetooth.requestDevice({
+      filters: [
+        {
+          namePrefix: "Chipsea-BLE",
+        },
+      ],
+    });
 
-
-    log('Connecting to GATT Server...');
     const server = await device.gatt.connect();
-
-    log('Getting Service...');
-    const service = await server.getPrimaryService(serviceUuid);
-
-    log('Getting Characteristic...');
-    myCharacteristic = await service.getCharacteristic(characteristicUuid);
+    const service = await server.getPrimaryService(SCALE_SERVICE_UUID);
+    myCharacteristic = await service.getCharacteristic(
+      SCALE_CHARACTERISTIC_UUID
+    );
 
     await myCharacteristic.startNotifications();
 
-    log('> Notifications started');
-    myCharacteristic.addEventListener('characteristicvaluechanged',
-        handleNotifications);
-  } catch(error) {
-    log('Argh! ' + error);
+    log("> Notifications started");
+    myCharacteristic.addEventListener(
+      "characteristicvaluechanged",
+      handleNotifications
+    );
+  } catch (error) {
+    log("Argh! " + error);
   }
 }
 
@@ -46,11 +42,13 @@ async function onStopButtonClick() {
   if (myCharacteristic) {
     try {
       await myCharacteristic.stopNotifications();
-      log('> Notifications stopped');
-      myCharacteristic.removeEventListener('characteristicvaluechanged',
-          handleNotifications);
-    } catch(error) {
-      log('Argh! ' + error);
+      log("> Notifications stopped");
+      myCharacteristic.removeEventListener(
+        "characteristicvaluechanged",
+        handleNotifications
+      );
+    } catch (error) {
+      log("Argh! " + error);
     }
   }
 }
@@ -62,7 +60,7 @@ function handleNotifications(event) {
   // In the "real" world, you'd use data.getUint8, data.getUint16 or even
   // TextDecoder to process raw data bytes.
   for (let i = 0; i < value.byteLength; i++) {
-    a.push('0x' + ('00' + value.getUint8(i).toString(16)).slice(-2));
+    a.push("0x" + ("00" + value.getUint8(i).toString(16)).slice(-2));
   }
-  log('> ' + a.join(' '));
+  log("> " + a.join(" "));
 }
