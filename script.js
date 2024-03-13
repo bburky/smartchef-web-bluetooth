@@ -74,11 +74,16 @@ function disconnect() {
 async function onDisconnected() {
   if (device) {
     for (let i = 0; i < 3; i++) {
-      
+      try {
+        server = await device.gatt.connect("Reconnecting...");
+        return;        
+      } catch (error) {
+        log("Argh! " + error);
+      }
     }
   }
-  device = null;
   server = null;
+  device = null;
   connectButton.textContent = "Connect";
 }
 
