@@ -1,34 +1,68 @@
-/*
-  This is your site JavaScript code - you can add interactivity!
-*/
+var myCharacteristic;
 
-// Print a message in the browser's dev tools console each time the page loads
-// Use your menus or right-click / control-click and choose "Inspect" > "Console"
-console.log("Hello 🌎");
+const SCALE_SERVICE_UUID = uuid`FFF0`;
+const SCALE_CHARACTERISTIC_UUID = uuid`FFF1`;
 
-/* 
-Make the "Click me!" button move when the visitor clicks it:
-- First add the button to the page by following the steps in the TODO 🚧
-*/
-const btn = document.querySelector("button"); // Get the button from the page
-if (btn) { // Detect clicks on the button
-  btn.onclick = function () {
-    // The 'dipped' class in style.css changes the appearance on click
-    btn.classList.toggle("dipped");
-  };
+async function onStartButtonClick() {
+  let serviceUuid = document.querySelector('#service').value;
+  if (serviceUuid.startsWith('0x')) {
+    serviceUuid = parseInt(serviceUuid);
+  }
+
+  let characteristicUuid = document.querySelector('#characteristic').value;
+  if (characteristicUuid.startsWith('0x')) {
+    characteristicUuid = parseInt(characteristicUuid);
+  }
+
+  try {
+    log('Requesting Bluetooth Device...');
+    const device = await device = navigator.bluetooth.requestDevice({
+    filters: {
+      namePrefix: "Chipsea-BLE"
+    }
+  });
+
+
+    log('Connecting to GATT Server...');
+    const server = await device.gatt.connect();
+
+    log('Getting Service...');
+    const service = await server.getPrimaryService(serviceUuid);
+
+    log('Getting Characteristic...');
+    myCharacteristic = await service.getCharacteristic(characteristicUuid);
+
+    await myCharacteristic.startNotifications();
+
+    log('> Notifications started');
+    myCharacteristic.addEventListener('characteristicvaluechanged',
+        handleNotifications);
+  } catch(error) {
+    log('Argh! ' + error);
+  }
 }
 
+async function onStopButtonClick() {
+  if (myCharacteristic) {
+    try {
+      await myCharacteristic.stopNotifications();
+      log('> Notifications stopped');
+      myCharacteristic.removeEventListener('characteristicvaluechanged',
+          handleNotifications);
+    } catch(error) {
+      log('Argh! ' + error);
+    }
+  }
+}
 
-// ----- GLITCH STARTER PROJECT HELPER CODE -----
-
-// Open file when the link in the preview is clicked
-let goto = (file, line) => {
-  window.parent.postMessage(
-    { type: "glitch/go-to-line", payload: { filePath: file, line: line } }, "*"
-  );
-};
-// Get the file opening button from its class name
-const filer = document.querySelectorAll(".fileopener");
-filer.forEach((f) => {
-  f.onclick = () => { goto(f.dataset.file, f.dataset.line); };
-});
+function handleNotifications(event) {
+  let value = event.target.value;
+  let a = [];
+  // Convert raw data bytes to hex values just for the sake of showing something.
+  // In the "real" world, you'd use data.getUint8, data.getUint16 or even
+  // TextDecoder to process raw data bytes.
+  for (let i = 0; i < value.byteLength; i++) {
+    a.push('0x' + ('00' + value.getUint8(i).toString(16)).slice(-2));
+  }
+  log('> ' + a.join(' '));
+}
