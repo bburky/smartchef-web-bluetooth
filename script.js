@@ -4,7 +4,7 @@ const SCALE_SERVICE_UUID = 0xFFF0;
 const SCALE_CHARACTERISTIC_UUID = 0xFFF1;
 
 function log(s) {
-  document.write(s);
+  document.write(s + "\n");
 }
 
 document.getElementById("start").addEventListener("click", onStartButtonClick);
@@ -18,6 +18,7 @@ async function onStartButtonClick() {
           namePrefix: "Chipsea-BLE",
         },
       ],
+      optionalServices: [SCALE_SERVICE_UUID],
     });
 
     const server = await device.gatt.connect();
@@ -56,11 +57,27 @@ async function onStopButtonClick() {
 function handleNotifications(event) {
   let value = event.target.value;
   let a = [];
-  // Convert raw data bytes to hex values just for the sake of showing something.
-  // In the "real" world, you'd use data.getUint8, data.getUint16 or even
-  // TextDecoder to process raw data bytes.
-  for (let i = 0; i < value.byteLength; i++) {
-    a.push("0x" + ("00" + value.getUint8(i).toString(16)).slice(-2));
+
+  const {
+    magic = data,
+    protocolVersion = data,
+    messageBodyProperties = data, // This may be "device type", but it seems to decode according to Table 1
+    weightMSB = data,
+    weightLSB = data,
+  } = value;
+  if (magic != 0xCA) {
+    return;
   }
-  log("> " + a.join(" "));
+  if (protocolVersion != 0x10) {
+    // My scale uses protocol version 0x10, which seems very similar to 0x11
+    return;
+  }
+  if (value.slice(1).reduce((sum, d) => sum ^ d) != 0) {
+    // trace("ScaleClient: invalid checksum\n");
+    return;
+  }
+  const decimals = DECIMALS[messageBodyProperties & 0b110];
+  const weight = (((weightMSB << 8) + weightLSB) / 10**decimals).toFixed(decimals);
+  
+  log("> " + weight);
 }
