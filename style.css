@@ -1,10 +1,11 @@
 #output {
   color: #666;
-/*   font-style: italic; */
+  font-style: italic;
 }
 
 #output.locked {
   color: #000;
+  font-style: none;
 }
 
 

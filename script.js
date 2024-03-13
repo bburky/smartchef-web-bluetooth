@@ -9,19 +9,31 @@ const DECIMALS = {
 	0b100: 2,
 }
 
-
-document.getElementById("start").addEventListener("click", onStartButtonClick);
-document.getElementById("stop").addEventListener("click", onStopButtonClick);
+const connectButton = document.getElementById("connect");
+connectButton.addEventListener("click", onConnectButtonClick);
 
 const output = document.getElementById("output");
+let device;
+let server;
 
 function log(s) {
   console.log(s);
 }
 
-async function onStartButtonClick() {
+async function onConnectButtonClick() {
+  if (device) {
+    disconnect();
+  } else {
+    connect();
+  }
+}
+
+
+async function connect() {
   try {
-    const device = await navigator.bluetooth.requestDevice({
+    connectButton.textContent = "Connecting..."
+    
+    device = await navigator.bluetooth.requestDevice({
       filters: [
         {
           namePrefix: "Chipsea-BLE",
@@ -29,8 +41,9 @@ async function onStartButtonClick() {
       ],
       optionalServices: [SCALE_SERVICE_UUID],
     });
+    device.addEventListener('gattserverdisconnected', onDisconnected);
 
-    const server = await device.gatt.connect();
+    server = await device.gatt.connect();
     const service = await server.getPrimaryService(SCALE_SERVICE_UUID);
     myCharacteristic = await service.getCharacteristic(
       SCALE_CHARACTERISTIC_UUID
@@ -43,9 +56,23 @@ async function onStartButtonClick() {
       "characteristicvaluechanged",
       handleNotifications
     );
+    connectButton.textContent = "Disconnect"
   } catch (error) {
     log("Argh! " + error);
+    connectButton.textContent = "Connect"
   }
+}
+
+function disconnect() {
+  if (device.gatt.connected) {
+    device.gatt.disconnect();
+  }
+}
+  
+async function onDisconnected() {
+  device = null;
+  server = null;
+  connectButton.textContent = "Connect";
 }
 
 async function onStopButtonClick() {
