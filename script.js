@@ -11,8 +11,8 @@ const DECIMALS = {
 const UNITS = {
   0b0000000: "g",
   0b0001000: "ml",
-  0b1001000: "lb", // Chipsea-BLE, marked ib
-  0b0110000: "lb", // smartchef, marked ib
+  0b1001000: "lb", // Chipsea-BLE, marked "ib"
+  0b0110000: "lb", // smartchef, marked "ib"
 };
 
 

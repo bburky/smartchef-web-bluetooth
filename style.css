@@ -2,7 +2,16 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  min-height: 98dvh;
 }
+
+header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  
+}
+
 
 #output {
   color: #666;
@@ -17,7 +26,7 @@ body {
   font-style: inherit;
 }
 
-
+/* default Glitch styles follow */
 
 /******************************************************************************
 START Glitch hello-app default styles
