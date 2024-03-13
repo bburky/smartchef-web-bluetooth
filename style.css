@@ -5,7 +5,7 @@
 
 #output.locked {
   color: #000;
-  font-style: none;
+  font-style: inherit;
 }
 
 

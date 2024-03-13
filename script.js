@@ -21,12 +21,20 @@ function log(s) {
 }
 
 async function onConnectButtonClick() {
-  if (device) {
+  if (device && server) {
     disconnect();
+  } else if (device) {
+    // The user is likely attempting to disconect during reconnection
+    // The API doesn't actually allow this really: https://issues.chromium.org/issues/40502943
+    // For now, discard the device and attempt a full initial connection
+    device = null;
+    connectButton.textContent = "Connecting...";
+    await connect();
+    connectButton.textContent = "Disconnect";
   } else {
     try {
       connectButton.textContent = "Connecting...";
-      connect();
+      await connect();
       connectButton.textContent = "Disconnect";
     } catch (error) {
       log("Argh! " + error);
@@ -42,6 +50,9 @@ async function connect() {
         {
           namePrefix: "Chipsea-BLE",
         },
+        {
+          namePrefix: "smartchef",
+        },
       ],
       optionalServices: [SCALE_SERVICE_UUID],
     });
@@ -52,9 +63,7 @@ async function connect() {
 
   const service = await server.getPrimaryService(SCALE_SERVICE_UUID);
 
-  myCharacteristic = await service.getCharacteristic(
-    SCALE_CHARACTERISTIC_UUID
-  );
+  myCharacteristic = await service.getCharacteristic(SCALE_CHARACTERISTIC_UUID);
   myCharacteristic.addEventListener(
     "characteristicvaluechanged",
     handleNotifications
@@ -72,16 +81,16 @@ function disconnect() {
 }
 
 async function onDisconnected() {
+  connectButton.textContent = "Reconnecting...";
+  server = null;
   if (device) {
     try {
-      connectButton.textContent = "Reconnecting...";
       server = await connect();
       return;
     } catch (error) {
       log("Argh! " + error);
     }
   }
-  server = null;
   device = null;
   connectButton.textContent = "Connect";
 }
