@@ -3,12 +3,17 @@ var myCharacteristic;
 const SCALE_SERVICE_UUID = 0xFFF0;
 const SCALE_CHARACTERISTIC_UUID = 0xFFF1;
 
-function log(s) {
-  document.write(s + "\n");
+const DECIMALS = {
+	0b000: 0,
+	0b010: 1,
+	0b100: 2,
 }
+
 
 document.getElementById("start").addEventListener("click", onStartButtonClick);
 document.getElementById("stop").addEventListener("click", onStopButtonClick);
+
+const output = document.getElementById("output");
 
 async function onStartButtonClick() {
   try {
@@ -55,15 +60,15 @@ async function onStopButtonClick() {
 }
 
 function handleNotifications(event) {
-  let value = event.target.value;
+  let value = new Uint8Array(event.target.value.buffer);
   let a = [];
 
   const {
-    magic = data,
-    protocolVersion = data,
-    messageBodyProperties = data, // This may be "device type", but it seems to decode according to Table 1
-    weightMSB = data,
-    weightLSB = data,
+    0: magic,
+    1: protocolVersion,
+    3: messageBodyProperties, // This may be "device type", but it seems to decode according to Table 1
+    5: weightMSB,
+    6: weightLSB,
   } = value;
   if (magic != 0xCA) {
     return;
@@ -79,5 +84,5 @@ function handleNotifications(event) {
   const decimals = DECIMALS[messageBodyProperties & 0b110];
   const weight = (((weightMSB << 8) + weightLSB) / 10**decimals).toFixed(decimals);
   
-  log("> " + weight);
+  output.textContent = weight;
 }
