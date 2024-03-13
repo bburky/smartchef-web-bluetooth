@@ -7,7 +7,17 @@ const DECIMALS = {
   0b000: 0,
   0b010: 1,
   0b100: 2,
+  0b110: 3,
 };
+
+const UNITS = {
+  0b0000000: "g",
+  0b0001000: "ml",
+  0b1001000: "lb", // Chipsea-BLE, marked ib
+  0b0110000: "lb", // smartchef, marked ib
+};
+
+
 
 const connectButton = document.getElementById("connect");
 connectButton.addEventListener("click", onConnectButtonClick);
@@ -113,14 +123,15 @@ async function onStopButtonClick() {
 function handleNotifications(event) {
   let value = new Uint8Array(event.target.value.buffer);
 
-  // Based on https://github.com/oliexdev/openScale/issues/496
-  // https://github.com/oliexdev/openScale/files/5224454/OKOK.Protocol.pdf
-  // https://raw.githubusercontent.com/mxiaoguang/chipsea-ble-lib/master/%E8%8A%AF%E6%B5%B7%E8%93%9D%E7%89%99%E7%A7%A4%E4%BA%91%E7%AB%AF%E7%89%88%E9%80%9A%E8%AE%AF%E5%8D%8F%E8%AE%AE%20v3.pdf
+  // Based on:
+  // #1 https://github.com/oliexdev/openScale/issues/496
+  // #2 https://github.com/oliexdev/openScale/files/5224454/OKOK.Protocol.pdf
+  // #3 https://raw.githubusercontent.com/mxiaoguang/chipsea-ble-lib/master/%E8%8A%AF%E6%B5%B7%E8%93%9D%E7%89%99%E7%A7%A4%E4%BA%91%E7%AB%AF%E7%89%88%E9%80%9A%E8%AE%AF%E5%8D%8F%E8%AE%AE%20v3.pdf
 
   const {
     0: magic,
     1: protocolVersion,
-    3: attributes, // This may be "device type", but it seems to decode according to Table 1
+    3: attributes, // This seems to decode according to Table 1 in #2
     5: weightMSB,
     6: weightLSB,
   } = value;
@@ -128,7 +139,7 @@ function handleNotifications(event) {
     return;
   }
   if (protocolVersion != 0x10) {
-    // My scale uses protocol version 0x10, which seems very similar to 0x11
+    // My scale uses protocol version 0x10, which seems very similar to 0x11 documented
     return;
   }
   if (value.slice(1).reduce((sum, d) => sum ^ d) != 0) {
@@ -137,20 +148,17 @@ function handleNotifications(event) {
   }
   const sign = attributes & 0b1000000 ? -1 : 1;
   const locked = attributes & 0b1;
-  const decimals = sign * DECIMALS[attributes & 0b110];
-  const weight = (((weightMSB << 8) + weightLSB) / 10 ** decimals).toFixed(
+  const decimals = DECIMALS[attributes & 0b110];
+  const unit = UNITS[attributes & 0b1111000];
+  const weight = (((weightMSB << 8) + weightLSB) / 10 ** decimals * sign).toFixed(
     decimals
   );
 
-  // todo
-  console.log("sign",     (attributes & 0b01000000).toString(2));
-  console.log("locked",   (attributes & 0b00000001).toString(2));
-  console.log("decimals", (attributes & 0b00000110).toString(2));
-  console.log((attributes & 0b01111000).toString(2));
-  // 0 g
-  // 1001000 lb (marked ib)
-  // 110000 ib on smartchef (does gain more decimal points?)
-  // 1000 ml
-  output.textContent = weight;
+  // console.log("sign",     (attributes & 0b01000000).toString(2));
+  // console.log("locked",   (attributes & 0b00000001).toString(2));
+  // console.log("decimals", (attributes & 0b00000110).toString(2));
+  // console.log("unit?",    (attributes & 0b01111000).toString(2));
+
+  output.textContent = `${weight} ${unit}`;
   output.className = locked ? "locked" : "";
 }
