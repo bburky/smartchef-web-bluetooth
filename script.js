@@ -143,8 +143,14 @@ function handleNotifications(event) {
   );
 
   // todo
+  console.log("sign",     (attributes & 0b01000000).toString(2));
+  console.log("locked",   (attributes & 0b00000001).toString(2));
+  console.log("decimals", (attributes & 0b00000110).toString(2));
   console.log((attributes & 0b01111000).toString(2));
-
+  // 0 g
+  // 1001000 lb (marked ib)
+  // 110000 ib on smartchef (does gain more decimal points?)
+  // 1000 ml
   output.textContent = weight;
   output.className = locked ? "locked" : "";
 }
