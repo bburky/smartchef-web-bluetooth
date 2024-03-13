@@ -15,6 +15,10 @@ document.getElementById("stop").addEventListener("click", onStopButtonClick);
 
 const output = document.getElementById("output");
 
+function log(s) {
+  console.log(s);
+}
+
 async function onStartButtonClick() {
   try {
     const device = await navigator.bluetooth.requestDevice({
