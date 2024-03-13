@@ -18,22 +18,29 @@ const UNITS = {
 };
 
 
-class Cancelled extends Error {
-  constructor(message = "", ...args) {
-    super(message, ...args);
-    this.message = "Cancelled " + message;
-  }
-}
-
 const connectButton = document.getElementById("connect");
 connectButton.addEventListener("click", onConnectButtonClick);
 
 const output = document.getElementById("output");
+
 let device;
 let server;
 
 function log(s) {
   console.log(s);
+}
+
+function protocolError() {
+  disconnect();
+  alert("Protocol error, unprocessable data received from device. This may be an incompatible model of bluetooth scale?");
+  throw new Error("Protocol Error");
+}
+
+class Cancelled extends Error {
+  constructor(message = "", ...args) {
+    super(message, ...args);
+    this.message = "Cancelled " + message;
+  }
 }
 
 async function onConnectButtonClick() {
@@ -129,21 +136,6 @@ async function onDisconnected() {
   connectButton.textContent = "Connect";
 }
 
-async function onStopButtonClick() {
-  if (myCharacteristic) {
-    try {
-      await myCharacteristic.stopNotifications();
-      log("> Notifications stopped");
-      myCharacteristic.removeEventListener(
-        "characteristicvaluechanged",
-        handleNotifications
-      );
-    } catch (error) {
-      log("Argh! " + error);
-    }
-  }
-}
-
 function handleNotifications(event) {
   let value = new Uint8Array(event.target.value.buffer);
 
@@ -160,15 +152,15 @@ function handleNotifications(event) {
     6: weightLSB,
   } = value;
   if (magic != 0xca) {
-    return;
+    protocolError();
   }
   if (protocolVersion != 0x10) {
     // My scale uses protocol version 0x10, which seems very similar to 0x11 documented
-    return;
+    protocolError();
   }
   if (value.slice(1).reduce((sum, d) => sum ^ d) != 0) {
-    // trace("ScaleClient: invalid checksum\n");
-    return;
+    log("invalid checksum");
+    protocolError();
   }
   const sign = attributes & 0b10000000 ? -1 : 1;
   const locked = attributes & 0b1;
