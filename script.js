@@ -69,16 +69,23 @@ async function connect() {
     device.addEventListener("gattserverdisconnected", onDisconnected);
   }
 
-  server = await device.gatt.connect();
+  newServer = await device.gatt.connect();
+  // It's impossible to cancel the connect() call, the browser will attempt to reconnect forever
+  // Therefore this app will abandon calls to connect sometimes, but that means that two will run in parallel
+  // Detect if an abandoned connect() succeeds and throw an error to indicate it was cancelled
+  if (server) {
+    throw new Error("cancelled");
+  }
+  server = newServer;
 
   const service = await server.getPrimaryService(SCALE_SERVICE_UUID);
 
-  myCharacteristic = await service.getCharacteristic(SCALE_CHARACTERISTIC_UUID);
-  myCharacteristic.addEventListener(
+  characteristic = await service.getCharacteristic(SCALE_CHARACTERISTIC_UUID);
+  characteristic.addEventListener(
     "characteristicvaluechanged",
     handleNotifications
   );
-  await myCharacteristic.startNotifications();
+  await characteristic.startNotifications();
 }
 
 function disconnect() {
@@ -96,6 +103,7 @@ async function onDisconnected() {
   if (device) {
     try {
       server = await connect();
+      connectButton.textContent = "Disconnect";
       return;
     } catch (error) {
       log("Argh! " + error);
@@ -146,7 +154,7 @@ function handleNotifications(event) {
     // trace("ScaleClient: invalid checksum\n");
     return;
   }
-  const sign = attributes & 0b1000000 ? -1 : 1;
+  const sign = attributes & 0b10000000 ? -1 : 1;
   const locked = attributes & 0b1;
   const decimals = DECIMALS[attributes & 0b110];
   const unit = UNITS[attributes & 0b1111000];
@@ -154,7 +162,7 @@ function handleNotifications(event) {
     decimals
   );
 
-  // console.log("sign",     (attributes & 0b01000000).toString(2));
+  // console.log("sign",     (attributes & 0b10000000).toString(2));
   // console.log("locked",   (attributes & 0b00000001).toString(2));
   // console.log("decimals", (attributes & 0b00000110).toString(2));
   // console.log("unit?",    (attributes & 0b01111000).toString(2));
