@@ -1,13 +1,13 @@
 var myCharacteristic;
 
-const SCALE_SERVICE_UUID = 0xFFF0;
-const SCALE_CHARACTERISTIC_UUID = 0xFFF1;
+const SCALE_SERVICE_UUID = 0xfff0;
+const SCALE_CHARACTERISTIC_UUID = 0xfff1;
 
 const DECIMALS = {
-	0b000: 0,
-	0b010: 1,
-	0b100: 2,
-}
+  0b000: 0,
+  0b010: 1,
+  0b100: 2,
+};
 
 const connectButton = document.getElementById("connect");
 connectButton.addEventListener("click", onConnectButtonClick);
@@ -24,15 +24,19 @@ async function onConnectButtonClick() {
   if (device) {
     disconnect();
   } else {
-    connect();
+    try {
+      connectButton.textContent = "Connecting...";
+      connect();
+      connectButton.textContent = "Disconnect";
+    } catch (error) {
+      log("Argh! " + error);
+      connectButton.textContent = "Connect";
+    }
   }
 }
 
-
-async function connect(connectingMessage = "Connecting...") {
-  try {
-    connectButton.textContent = connectingMessage;
-    
+async function connect() {
+  if (!device) {
     device = await navigator.bluetooth.requestDevice({
       filters: [
         {
@@ -41,25 +45,21 @@ async function connect(connectingMessage = "Connecting...") {
       ],
       optionalServices: [SCALE_SERVICE_UUID],
     });
-    device.addEventListener('gattserverdisconnected', onDisconnected);
-    server = await device.gatt.connect();
-
-    const service = await server.getPrimaryService(SCALE_SERVICE_UUID);
-
-    myCharacteristic = await service.getCharacteristic(
-      SCALE_CHARACTERISTIC_UUID
-    );
-    myCharacteristic.addEventListener(
-      "characteristicvaluechanged",
-      handleNotifications
-    );
-    await myCharacteristic.startNotifications();
-
-    connectButton.textContent = "Disconnect";
-  } catch (error) {
-    log("Argh! " + error);
-    connectButton.textContent = "Connect";
+    device.addEventListener("gattserverdisconnected", onDisconnected);
   }
+
+  server = await device.gatt.connect();
+
+  const service = await server.getPrimaryService(SCALE_SERVICE_UUID);
+
+  myCharacteristic = await service.getCharacteristic(
+    SCALE_CHARACTERISTIC_UUID
+  );
+  myCharacteristic.addEventListener(
+    "characteristicvaluechanged",
+    handleNotifications
+  );
+  await myCharacteristic.startNotifications();
 }
 
 function disconnect() {
@@ -70,16 +70,15 @@ function disconnect() {
     deviceToDisconnect.gatt.disconnect();
   }
 }
-  
+
 async function onDisconnected() {
   if (device) {
-    for (let i = 0; i < 3; i++) {
-      try {
-        server = await device.gatt.connect("Reconnecting...");
-        return;        
-      } catch (error) {
-        log("Argh! " + error);
-      }
+    try {
+      connectButton.textContent = "Reconnecting...";
+      server = await connect();
+      return;
+    } catch (error) {
+      log("Argh! " + error);
     }
   }
   server = null;
@@ -106,9 +105,9 @@ function handleNotifications(event) {
   let value = new Uint8Array(event.target.value.buffer);
 
   // Based on https://github.com/oliexdev/openScale/issues/496
-  // https://github.com/oliexdev/openScale/files/5224454/OKOK.Protocol.pdf  
+  // https://github.com/oliexdev/openScale/files/5224454/OKOK.Protocol.pdf
   // https://raw.githubusercontent.com/mxiaoguang/chipsea-ble-lib/master/%E8%8A%AF%E6%B5%B7%E8%93%9D%E7%89%99%E7%A7%A4%E4%BA%91%E7%AB%AF%E7%89%88%E9%80%9A%E8%AE%AF%E5%8D%8F%E8%AE%AE%20v3.pdf
-  
+
   const {
     0: magic,
     1: protocolVersion,
@@ -116,7 +115,7 @@ function handleNotifications(event) {
     5: weightMSB,
     6: weightLSB,
   } = value;
-  if (magic != 0xCA) {
+  if (magic != 0xca) {
     return;
   }
   if (protocolVersion != 0x10) {
@@ -130,11 +129,13 @@ function handleNotifications(event) {
   const sign = attributes & 0b1000000 ? -1 : 1;
   const locked = attributes & 0b1;
   const decimals = sign * DECIMALS[attributes & 0b110];
-  const weight = (((weightMSB << 8) + weightLSB) / 10**decimals).toFixed(decimals);
+  const weight = (((weightMSB << 8) + weightLSB) / 10 ** decimals).toFixed(
+    decimals
+  );
 
   // todo
   console.log((attributes & 0b01111000).toString(2));
-  
+
   output.textContent = weight;
-  output.className = locked ? 'locked' : '';
+  output.className = locked ? "locked" : "";
 }
