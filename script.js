@@ -19,9 +19,9 @@ let device;
 let server;
 
 // Install service worker, required to meet PWA installability criteria in Chrome
-// if ("serviceWorker" in navigator) {
-//   navigator.serviceWorker.register("./serviceworker.js");
-// }
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./serviceworker.js");
+}
 
 //  PWA install button
 let installPrompt = null;
@@ -56,7 +56,7 @@ const unsupported = document.getElementById("unsupported");
 
 if ("bluetooth" in navigator) {
   connectButton.removeAttribute("disabled");
-  // unsupported.setAttribute("hidden", ""); 
+  unsupported.setAttribute("hidden", ""); 
 }
 
 function log(s) {
