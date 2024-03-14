@@ -37,7 +37,7 @@ installButton.addEventListener("click", async () => {
     return;
   }
   const result = await installPrompt.prompt();
-  // console.log(`Install prompt was: ${result.outcome}`);
+  log(`Install prompt result: ${result.outcome}`);
   disableInAppInstallPrompt();
 });
 function disableInAppInstallPrompt() {
@@ -56,9 +56,13 @@ connectButton.addEventListener("click", onConnectButtonClick);
 const unsupported = document.getElementById("unsupported");
 
 if (inIframe()) {
-  unsupported.textContent = 
-}
-if ("bluetooth" in navigator) {
+  unsupported.textContent = "⚠️ Bluetooth cannot be accessed in an embedded website. ";
+  const link = document.createElement("a");
+  link.target = "_top"; // Cannot use _blank, Glitch iframes do not have allow-popups permissions
+  link.href = document.location;
+  link.textContent = "Click here to open in a new window."
+  unsupported.appendChild(link);
+} else if ("bluetooth" in navigator) {
   connectButton.removeAttribute("disabled");
   unsupported.setAttribute("hidden", ""); 
 }

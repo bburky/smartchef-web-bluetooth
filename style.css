@@ -11,6 +11,10 @@ header, footer {
   justify-content: space-between;
 }
 
+button {
+  white-space:nowrap;
+}
+
 #debug.hidden {
   opacity: 0;
 }
