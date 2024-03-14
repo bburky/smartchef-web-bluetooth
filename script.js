@@ -62,6 +62,7 @@ if (inIframe()) {
   link.href = document.location;
   link.textContent = "Click here to open in a new window."
   unsupported.appendChild(link);
+  document.body.className = "iframed";
 } else if ("bluetooth" in navigator) {
   connectButton.removeAttribute("disabled");
   unsupported.setAttribute("hidden", ""); 
