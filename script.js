@@ -106,6 +106,9 @@ function toggleDebug() {
 
 
 async function onConnectButtonClick() {
+  // Hide any visible error message
+  unsupported.setAttribute("hidden", "");
+
   if (device && server) {
     log("onConnectButtonClick() disconnect connected device");
     disconnect();
@@ -129,9 +132,14 @@ async function onConnectButtonClick() {
       connectButton.textContent = "Disconnect";
     } catch (e) {
       error(e);
-      unsupported.removeAttribute("disabled");
-      
       connectButton.textContent = "Connect";
+
+      if (e.name == "NotFoundError") {
+        // Don't show an error if the user just cancels the connect dialog        
+        return;
+      }
+      unsupported.removeAttribute("hidden");
+      unsupported.textContent = `⚠️ ${e}`;
     }
   }
 }
@@ -140,7 +148,7 @@ async function connect() {
   log("connect()");
 
   let currentDevice;
-
+  
   if (device) {
     currentDevice = device;
   } else {
