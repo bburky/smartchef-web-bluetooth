@@ -1,7 +1,7 @@
 // https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Tutorials/CycleTracker/Service_workers#complete_service_worker_file
 
 // The version of the cache.
-const VERSION = "v1";
+const VERSION = "vb4";
 
 // The name of the cache
 const CACHE_NAME = `period-tracker-${VERSION}`;
