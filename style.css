@@ -15,6 +15,11 @@ header, footer {
   opacity: 0;
 }
 
+#debug-output {
+  max-height: 50em;
+  overflow: scroll;
+}
+
 #output {
   color: #666666;
   font-style: italic;

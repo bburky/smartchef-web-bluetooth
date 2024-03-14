@@ -54,9 +54,13 @@ const connectButton = document.getElementById("connect");
 connectButton.addEventListener("click", onConnectButtonClick);
 
 function log(s) {
-  // TODO log better 
   debugOutput.textContent += s + "\n";
   console.log(s);
+}
+
+function error(s) {
+  debugOutput.textContent += s + "\n";
+  console.error(s);
 }
 
 function protocolError() {
@@ -116,8 +120,8 @@ async function onConnectButtonClick() {
       connectButton.textContent = "Connecting...";
       await connect();
       connectButton.textContent = "Disconnect";
-    } catch (error) {
-      log(error);
+    } catch (e) {
+      error(e);
       connectButton.textContent = "Connect";
     }
   }
@@ -131,6 +135,7 @@ async function connect() {
   if (device) {
     currentDevice = device;
   } else {
+    log("connect() requestDevice()");
     currentDevice = await navigator.bluetooth.requestDevice({
       filters: [
         {
@@ -146,9 +151,12 @@ async function connect() {
     });
     currentDevice.addEventListener("gattserverdisconnected", onDisconnected);
     device = currentDevice;
+    log("connect() requestDevice() succeeded");
   }
 
+  log("connect() gatt.connect()");
   const newServer = await currentDevice.gatt.connect();
+  log("connect() gatt.connect() succeeded");
   // It's impossible to cancel the connect() call, the browser will attempt to reconnect forever
   // Therefore this app will abandon calls to connect sometimes, but that means that two will run in parallel
   // Detect if an abandoned connect() succeeds and throw an error to indicate it was cancelled
@@ -166,6 +174,8 @@ async function connect() {
     handleNotifications
   );
   await characteristic.startNotifications();
+
+  log("connect() succeeded");
 }
 
 function disconnect() {
@@ -189,12 +199,12 @@ async function onDisconnected() {
       server = await connect();
       connectButton.textContent = "Disconnect";
       return;
-    } catch (error) {
-      if (error instanceof Cancelled) {
+    } catch (e) {
+      if (e instanceof Cancelled) {
         log("onDisconnected() caught Cancelled");
         return;          
       }
-      log(error);
+      error(e);
     }
   }
 
@@ -244,7 +254,7 @@ function handleNotifications(event) {
     decimals
   );
   
-  log(`handleNotifications() raw data ${value.map(e => e.toLocaleString('en', {minimumIntegerDigits:3}))}`);
+  // log(`handleNotifications() raw data ${[...value].map(e => e.toLocaleString('en', {minimumIntegerDigits:3}))}`);
 
   output.textContent = `${weight} ${unit}`;
   output.className = locked ? "locked" : "";
