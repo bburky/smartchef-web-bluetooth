@@ -96,10 +96,10 @@ function toggleDebug() {
 
 async function onConnectButtonClick() {
   if (device && server) {
-    log("onConnectButtonClick() disconnect");
+    log("onConnectButtonClick() disconnect connected device");
     disconnect();
   } else if (device) {
-    log("onConnectButtonClick() disconnect");
+    log("onConnectButtonClick() disconnect during reconnection");
     
     // The user is likely attempting to disconect during reconnection
     // The API doesn't actually allow cancelling a connect() call: https://issues.chromium.org/issues/40502943
@@ -111,6 +111,8 @@ async function onConnectButtonClick() {
     connectButton.textContent = "Disconnect";
   } else {
     try {
+      log("onConnectButtonClick() connect");
+
       connectButton.textContent = "Connecting...";
       await connect();
       connectButton.textContent = "Disconnect";
@@ -219,14 +221,16 @@ function handleNotifications(event) {
     6: weightLSB,
   } = value;
   if (magic != 0xca) {
+    log("handleNotifications() invalid magic");
     protocolError();
   }
   if (protocolVersion != 0x10) {
+    log("handleNotifications() invalid protocolVersion");
     // My scale uses protocol version 0x10, which seems very similar to 0x11 documented
     protocolError();
   }
   if (value.slice(1).reduce((sum, d) => sum ^ d) != 0) {
-    log("invalid checksum");
+    log("handleNotifications() invalid checksum");
     // TODO: could just silently drop packets with checksum errors
     protocolError();
   }
@@ -239,6 +243,8 @@ function handleNotifications(event) {
   const weight = (((weightMSB << 8) + weightLSB) / 10 ** decimals * sign).toFixed(
     decimals
   );
+  
+  log(`handleNotifications() raw data ${value.map(e => e.toLocaleString('en', {minimumIntegerDigits:3}))}`);
 
   output.textContent = `${weight} ${unit}`;
   output.className = locked ? "locked" : "";
