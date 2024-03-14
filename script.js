@@ -52,6 +52,12 @@ const debugOutput = document.getElementById("debug-output");
 debugButton.addEventListener("click", onDebugButtonClick);
 const connectButton = document.getElementById("connect");
 connectButton.addEventListener("click", onConnectButtonClick);
+const unsupported = document.getElementById("unsupported");
+
+if ("bluetooth" in navigator) {
+  connectButton.removeAttribute("disabled");
+  // unsupported.setAttribute("hidden", ""); 
+}
 
 function log(s) {
   debugOutput.textContent += s + "\n";
@@ -208,7 +214,7 @@ async function onDisconnected() {
     }
   }
 
-  log("onDisconnected() disconnecting");
+  log("onDisconnected() disconnected");
   device = null;
   connectButton.textContent = "Connect";
 }

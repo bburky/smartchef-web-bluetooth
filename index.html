@@ -12,10 +12,17 @@
   <body>
     <header>
       <div>
-        <button id="connect">Connect</button>
-        <button id="debug" class="hidden">🐞</button>
+        <div>
+          <button id="connect" disabled>Connect</button>
+          <button id="debug" class="hidden">🐞</button>
+          <p id="unsupported">
+            ⚠️ Your browser does not support Web Bluetooth.
+          </p>
+        </div>
       </div>
-      <button id="install" hidden>Install App</button>
+      <div>
+        <button id="install" hidden>Install App</button>      
+      </div>
       <span style="text-align: right">
         <i>by <a target="_blank" href="https://bburky.com/">bburky</a></i>&nbsp;💣
         <br>
