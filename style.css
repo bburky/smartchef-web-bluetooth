@@ -11,8 +11,8 @@ header, footer {
   justify-content: space-between;
 }
 
-button#debug {
-  font-size: 72px;
+#debug {
+/*   font-size: 72px; */
 }
 
 #output {

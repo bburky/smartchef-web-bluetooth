@@ -11,7 +11,10 @@
   </head>
   <body>
     <header>
-      <button id="connect">Connect</button>
+      <div>
+        <button id="connect">Connect</button>
+        <button id="debug">🐞</button>
+      </div>
       <button id="install" hidden>Install App</button>
       <span style="text-align: right">
         <i>by <a target="_blank" href="https://bburky.com/">bburky</a></i>&nbsp;💣
@@ -21,6 +24,10 @@
       </span>
     </header>
     <div id="output">- - -</div>
+    <div id="debug-options" hidden>
+      TODO
+    </div>
+    <pre id="debug-output" hidden></pre>
     <footer>
       <div>
         <p>
@@ -33,9 +40,6 @@
           <a href="https://www.amazon.com/dp/B009LCM90C">3000g</a> scale models.
         </p>
       </div>
-      <button>
-        🐞
-      </button>
     </footer>
   </body>
 </html>
