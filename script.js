@@ -17,6 +17,7 @@ const UNITS = {
 
 let device;
 let server;
+let wakeLock
 
 // Install service worker, required to meet PWA installability criteria in Chrome
 if ("serviceWorker" in navigator) {
@@ -128,6 +129,8 @@ async function onConnectButtonClick() {
       connectButton.textContent = "Disconnect";
     } catch (e) {
       error(e);
+      unsupported.removeAttribute("disabled");
+      
       connectButton.textContent = "Connect";
     }
   }
@@ -181,6 +184,14 @@ async function connect() {
   );
   await characteristic.startNotifications();
 
+  if ("wakeLock" in navigator) {
+    log("connect() wakeLock.request()");
+    wakeLock = await navigator.wakeLock.request();
+    wakeLock.addEventListener("release", () => {
+      log("Wake Lock has been released");
+    });
+  }
+  
   log("connect() succeeded");
 }
 
@@ -217,6 +228,9 @@ async function onDisconnected() {
   log("onDisconnected() disconnected");
   device = null;
   connectButton.textContent = "Connect";
+  if (wakeLock) {
+    wakeLock.release();
+  }
 }
 
 function handleNotifications(event) {
