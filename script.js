@@ -45,8 +45,9 @@ async function onConnectButtonClick() {
     disconnect();
   } else if (device) {
     // The user is likely attempting to disconect during reconnection
-    // The API doesn't actually allow this really: https://issues.chromium.org/issues/40502943
-    // For now, discard the device and attempt a full initial connection
+    // The API doesn't actually allow cancelling a connect() call: https://issues.chromium.org/issues/40502943
+    // Attempt to disconnect it anyway though, and then discard the device and attempt a full initial connection
+    device.gatt.disconnect();
     device = null;
     connectButton.textContent = "Connecting...";
     await connect();
@@ -90,9 +91,9 @@ async function connect() {
   // It's impossible to cancel the connect() call, the browser will attempt to reconnect forever
   // Therefore this app will abandon calls to connect sometimes, but that means that two will run in parallel
   // Detect if an abandoned connect() succeeds and throw an error to indicate it was cancelled
-  if (server) {
-    throw new Cancelled();
+  if (!device || server) {
     currentDevice.gatt.disconnect();
+    throw new Cancelled();
   }
   server = newServer;
 
@@ -144,6 +145,7 @@ function handleNotifications(event) {
   // #3 https://raw.githubusercontent.com/mxiaoguang/chipsea-ble-lib/master/%E8%8A%AF%E6%B5%B7%E8%93%9D%E7%89%99%E7%A7%A4%E4%BA%91%E7%AB%AF%E7%89%88%E9%80%9A%E8%AE%AF%E5%8D%8F%E8%AE%AE%20v3.pdf
   // and some manual reverse engineering
 
+  // This is the most wonderfully bizarre way to destructure an array I've ever done
   const {
     0: magic,
     1: protocolVersion,
