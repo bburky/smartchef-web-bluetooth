@@ -18,6 +18,27 @@ const UNITS = {
 let device;
 let server;
 
+
+let installPrompt = null;
+const installButton = document.getElementById("install");
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+  installPrompt = event;
+  installButton.removeAttribute("hidden");
+});
+installButton.addEventListener("click", async () => {
+  if (!installPrompt) {
+    return;
+  }
+  const result = await installPrompt.prompt();
+  // console.log(`Install prompt was: ${result.outcome}`);
+  disableInAppInstallPrompt();
+});
+function disableInAppInstallPrompt() {
+  installPrompt = null;
+  installButton.setAttribute("hidden", "");
+}
+
 const output = document.getElementById("output");
 const connectButton = document.getElementById("connect");
 connectButton.addEventListener("click", onConnectButtonClick);
@@ -145,7 +166,7 @@ function handleNotifications(event) {
   // #3 https://raw.githubusercontent.com/mxiaoguang/chipsea-ble-lib/master/%E8%8A%AF%E6%B5%B7%E8%93%9D%E7%89%99%E7%A7%A4%E4%BA%91%E7%AB%AF%E7%89%88%E9%80%9A%E8%AE%AF%E5%8D%8F%E8%AE%AE%20v3.pdf
   // and some manual reverse engineering
 
-  // This is the most wonderfully bizarre way to destructure an array I've ever done
+  // This is JavaScript feature is the most wonderfully bizarre way to destructure an array I've ever used
   const {
     0: magic,
     1: protocolVersion,
@@ -165,9 +186,9 @@ function handleNotifications(event) {
     protocolError();
   }
   const sign = attributes & 0b10000000 ? -1 : 1;
-  const locked = attributes & 0b1;
-  const decimals = DECIMALS[attributes & 0b110];
-  const unit = UNITS[attributes & 0b1111000];
+  const locked = attributes & 0b00000001;
+  const decimals = DECIMALS[attributes & 0b00000110];
+  const unit = UNITS[attributes & 0b01111000];
   const weight = (((weightMSB << 8) + weightLSB) / 10 ** decimals * sign).toFixed(
     decimals
   );
