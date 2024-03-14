@@ -5,7 +5,7 @@ body {
   min-height: 98dvh;
 }
 body.iframed {
-  /*  The Glitch UI hides the bottom of an iframed app  */
+  /*  The Glitch preview UI hides the bottom of an iframed app  */
   min-height: 80dvh;
 }
 

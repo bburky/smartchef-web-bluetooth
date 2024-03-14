@@ -126,6 +126,7 @@ async function onConnectButtonClick() {
   if (device && server) {
     log("onConnectButtonClick() disconnect connected device");
     disconnect();
+    return;
   } else if (device) {
     log("onConnectButtonClick() disconnect during reconnection");
     
@@ -134,31 +135,25 @@ async function onConnectButtonClick() {
     // Attempt to disconnect it anyway though, and then discard the device and attempt a full initial connection
     device.gatt.disconnect();
     device = null;
+  }
+
+  log("onConnectButtonClick() connect");
+  try {
     connectButton.textContent = "Connecting...";
-    try {
     await connect();
     connectButton.textContent = "Disconnect";
-  } else {
-    try {
-      log("onConnectButtonClick() connect");
-
-      connectButton.textContent = "Connecting...";
-      await connect();
-      connectButton.textContent = "Disconnect";
-    } catch (e) {
-      error(e);
-      connectButton.textContent = "Connect";
-
-      if (e.name == "NotFoundError") {
-        // Don't show an error if the user just cancels the connect dialog        
-        return;
-      }
-      errorMessage.removeAttribute("hidden");
-      errorMessage.textContent = `⚠️ ${e}`;
+  } catch (e) {
+    error(e);
+    connectButton.textContent = "Connect";
+    if (e.name == "NotFoundError") {
+      // Don't show an error if the user just cancels the connect dialog
+      return;
     }
+    errorMessage.removeAttribute("hidden");
+    errorMessage.textContent = `⚠️ ${e}`;
   }
 }
-
+  
 async function connect() {
   log("connect()");
 
@@ -231,6 +226,8 @@ function disconnect() {
 }
 
 async function onDisconnected() {
+  output.textContent = "- - -";
+  output.className = "";
   server = null;
   if (device) {
     try {
