@@ -4,6 +4,10 @@ body {
   justify-content: space-between;
   min-height: 98dvh;
 }
+body.iframed {
+  /*  The Glitch UI hides the bottom of an iframed app  */
+  min-height: 80dvh;
+}
 
 header, footer {
   display: flex;
@@ -16,6 +20,7 @@ button {
 }
 
 #debug.hidden {
+  /*  visually hidden, but still clickable  */
   opacity: 0;
 }
 

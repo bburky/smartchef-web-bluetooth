@@ -48,24 +48,24 @@ function disableInAppInstallPrompt() {
 // Hook up app's Connect button and output element
 const output = document.getElementById("output");
 const debugButton = document.getElementById("debug");
-const debugOptions = document.getElementById("debug-options");
 const debugOutput = document.getElementById("debug-output");
 debugButton.addEventListener("click", onDebugButtonClick);
 const connectButton = document.getElementById("connect");
 connectButton.addEventListener("click", onConnectButtonClick);
-const unsupported = document.getElementById("unsupported");
+const errorMessage = document.getElementById("error");
 
 if (inIframe()) {
-  unsupported.textContent = "⚠️ Bluetooth cannot be accessed in an embedded website. ";
+  document.body.className = "iframed";
+
+  errorMessage.textContent = "⚠️ Bluetooth cannot be accessed in an embedded website. ";
   const link = document.createElement("a");
   link.target = "_top"; // Cannot use _blank, Glitch iframes do not have allow-popups permissions
   link.href = document.location;
   link.textContent = "Click here to open in a new window."
-  unsupported.appendChild(link);
-  document.body.className = "iframed";
+  errorMessage.appendChild(link);
 } else if ("bluetooth" in navigator) {
   connectButton.removeAttribute("disabled");
-  unsupported.setAttribute("hidden", ""); 
+  errorMessage.setAttribute("hidden", ""); 
 }
 
 function inIframe () {
@@ -112,10 +112,8 @@ function onDebugButtonClick() {
 function toggleDebug() {
   const debugVisible = !(debugClickedCount & 1);
   if (debugVisible) {
-    debugOptions.removeAttribute("hidden");
     debugOutput.removeAttribute("hidden");
   } else {
-     debugOptions.setAttribute("hidden", ""); 
      debugOutput.setAttribute("hidden", ""); 
   }
 }
@@ -123,7 +121,7 @@ function toggleDebug() {
 
 async function onConnectButtonClick() {
   // Hide any visible error message
-  unsupported.setAttribute("hidden", "");
+  errorMessage.setAttribute("hidden", "");
 
   if (device && server) {
     log("onConnectButtonClick() disconnect connected device");
@@ -137,6 +135,7 @@ async function onConnectButtonClick() {
     device.gatt.disconnect();
     device = null;
     connectButton.textContent = "Connecting...";
+    try {
     await connect();
     connectButton.textContent = "Disconnect";
   } else {
@@ -154,8 +153,8 @@ async function onConnectButtonClick() {
         // Don't show an error if the user just cancels the connect dialog        
         return;
       }
-      unsupported.removeAttribute("hidden");
-      unsupported.textContent = `⚠️ ${e}`;
+      errorMessage.removeAttribute("hidden");
+      errorMessage.textContent = `⚠️ ${e}`;
     }
   }
 }
