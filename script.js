@@ -142,6 +142,7 @@ function handleNotifications(event) {
   // #1 https://github.com/oliexdev/openScale/issues/496
   // #2 https://github.com/oliexdev/openScale/files/5224454/OKOK.Protocol.pdf
   // #3 https://raw.githubusercontent.com/mxiaoguang/chipsea-ble-lib/master/%E8%8A%AF%E6%B5%B7%E8%93%9D%E7%89%99%E7%A7%A4%E4%BA%91%E7%AB%AF%E7%89%88%E9%80%9A%E8%AE%AF%E5%8D%8F%E8%AE%AE%20v3.pdf
+  // and some manual reverse engineering
 
   const {
     0: magic,
