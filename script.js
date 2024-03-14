@@ -55,9 +55,20 @@ const connectButton = document.getElementById("connect");
 connectButton.addEventListener("click", onConnectButtonClick);
 const unsupported = document.getElementById("unsupported");
 
+if (inIframe()) {
+  unsupported.textContent = 
+}
 if ("bluetooth" in navigator) {
   connectButton.removeAttribute("disabled");
   unsupported.setAttribute("hidden", ""); 
+}
+
+function inIframe () {
+    try {
+        return window.self !== window.top;
+    } catch (e) {
+        return true;
+    }
 }
 
 function log(s) {
