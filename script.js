@@ -15,15 +15,15 @@ const UNITS = {
   0b0110000: "lb", // smartchef, marked "ib"
 };
 
+let device;
+let server;
 
 const output = document.getElementById("output");
 const connectButton = document.getElementById("connect");
 connectButton.addEventListener("click", onConnectButtonClick);
 
-let device;
-let server;
-
 function log(s) {
+  // TODO log better 
   console.log(s);
 }
 
@@ -57,7 +57,7 @@ async function onConnectButtonClick() {
       await connect();
       connectButton.textContent = "Disconnect";
     } catch (error) {
-      log("Argh! " + error);
+      log(error);
       connectButton.textContent = "Connect";
     }
   }
@@ -128,7 +128,7 @@ async function onDisconnected() {
       if (error instanceof Cancelled) {
         return;          
       }
-      log("Argh! " + error);
+      log(error);
     }
   }
   device = null;
