@@ -18,6 +18,9 @@ const UNITS = {
 let device;
 let server;
 
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./serviceworker.js");
+}
 
 let installPrompt = null;
 const installButton = document.getElementById("install");
