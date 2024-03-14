@@ -19,7 +19,7 @@ const APP_STATIC_RESOURCES = [
   "https://cdn.glitch.me/605e2a51-d45f-4d87-a285-9410ad350515%2FHKGrotesk-Bold.otf?v=1603136323437",
 ];
 
-// On install, cache the static resources
+On install, cache the static resources
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {

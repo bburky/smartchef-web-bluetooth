@@ -5,15 +5,18 @@ body {
   min-height: 98dvh;
 }
 
-header {
+header, footer {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
 }
 
+button#debug {
+  font-size: 72px;
+}
 
 #output {
-  color: #666;
+  color: #666666;
   font-style: italic;
   width: 100%;
   text-align: center;
@@ -21,7 +24,7 @@ header {
 }
 
 #output.locked {
-  color: #000;
+  color: #000000;
   font-style: inherit;
 }
 

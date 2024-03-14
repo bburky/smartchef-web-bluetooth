@@ -19,9 +19,9 @@ let device;
 let server;
 
 // Install service worker, required to meet PWA installability criteria in Chrome
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./serviceworker.js");
-}
+// if ("serviceWorker" in navigator) {
+//   navigator.serviceWorker.register("./serviceworker.js");
+// }
 
 //  PWA install button
 let installPrompt = null;
@@ -176,7 +176,7 @@ function handleNotifications(event) {
   const {
     0: magic,
     1: protocolVersion,
-    3: attributes, // This seems to decode according to Table 1 in #2
+    3: attributes, // This mostly seems to decode according to Table 1 in document #2 linked above
     5: weightMSB,
     6: weightLSB,
   } = value;
@@ -192,18 +192,15 @@ function handleNotifications(event) {
     // TODO: could just silently drop packets with checksum errors
     protocolError();
   }
-  const sign     = attributes & 0b10000000 ? -1 : 1;
+
   const locked   =          attributes & 0b00000001;
   const decimals = DECIMALS[attributes & 0b00000110];
-  const unit = UNITS[attributes & 0b01111000];
+  const unit     =    UNITS[attributes & 0b01111000];
+  const sign     =          attributes & 0b10000000 ? -1 : 1;
+
   const weight = (((weightMSB << 8) + weightLSB) / 10 ** decimals * sign).toFixed(
     decimals
   );
-
-  // console.log("sign",     (attributes & 0b10000000).toString(2));
-  // console.log("locked",   (attributes & 0b00000001).toString(2));
-  // console.log("decimals", (attributes & 0b00000110).toString(2));
-  // console.log("unit?",    (attributes & 0b01111000).toString(2));
 
   output.textContent = `${weight} ${unit}`;
   output.className = locked ? "locked" : "";
