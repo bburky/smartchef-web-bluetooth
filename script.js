@@ -18,10 +18,12 @@ const UNITS = {
 let device;
 let server;
 
+// Install service worker, required to meet PWA installability criteria in Chrome
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("./serviceworker.js");
 }
 
+//  PWA install button
 let installPrompt = null;
 const installButton = document.getElementById("install");
 window.addEventListener("beforeinstallprompt", (event) => {
@@ -42,6 +44,7 @@ function disableInAppInstallPrompt() {
   installButton.setAttribute("hidden", "");
 }
 
+// Hook up app's Connect button and output element
 const output = document.getElementById("output");
 const connectButton = document.getElementById("connect");
 connectButton.addEventListener("click", onConnectButtonClick);
@@ -186,10 +189,11 @@ function handleNotifications(event) {
   }
   if (value.slice(1).reduce((sum, d) => sum ^ d) != 0) {
     log("invalid checksum");
+    // TODO: could just silently drop packets with checksum errors
     protocolError();
   }
-  const sign = attributes & 0b10000000 ? -1 : 1;
-  const locked = attributes & 0b00000001;
+  const sign     = attributes & 0b10000000 ? -1 : 1;
+  const locked   =          attributes & 0b00000001;
   const decimals = DECIMALS[attributes & 0b00000110];
   const unit = UNITS[attributes & 0b01111000];
   const weight = (((weightMSB << 8) + weightLSB) / 10 ** decimals * sign).toFixed(
