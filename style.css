@@ -11,8 +11,8 @@ header, footer {
   justify-content: space-between;
 }
 
-#debug {
-/*   font-size: 72px; */
+#debug.hidden {
+  opacity: 0;
 }
 
 #output {

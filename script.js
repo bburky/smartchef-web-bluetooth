@@ -46,11 +46,16 @@ function disableInAppInstallPrompt() {
 
 // Hook up app's Connect button and output element
 const output = document.getElementById("output");
+const debugButton = document.getElementById("debug");
+const debugOptions = document.getElementById("debug-options");
+const debugOutput = document.getElementById("debug-output");
+debugButton.addEventListener("click", onDebugButtonClick);
 const connectButton = document.getElementById("connect");
 connectButton.addEventListener("click", onConnectButtonClick);
 
 function log(s) {
   // TODO log better 
+  debugOutput.textContent += s + "\n";
   console.log(s);
 }
 
@@ -67,10 +72,35 @@ class Cancelled extends Error {
   }
 }
 
+let debugClickedCount = 0;
+function onDebugButtonClick() {
+  debugClickedCount++;
+  if (debugClickedCount == 3) {
+    debugButton.className = "";
+  } else if (debugClickedCount >= 4) {
+    toggleDebug();
+  }  
+}
+
+function toggleDebug() {
+  const debugVisible = !(debugClickedCount & 1);
+  if (debugVisible) {
+    debugOptions.removeAttribute("hidden");
+    debugOutput.removeAttribute("hidden");
+  } else {
+     debugOptions.setAttribute("hidden", ""); 
+     debugOutput.setAttribute("hidden", ""); 
+  }
+}
+
+
 async function onConnectButtonClick() {
   if (device && server) {
+    log("onConnectButtonClick() disconnect");
     disconnect();
   } else if (device) {
+    log("onConnectButtonClick() disconnect");
+    
     // The user is likely attempting to disconect during reconnection
     // The API doesn't actually allow cancelling a connect() call: https://issues.chromium.org/issues/40502943
     // Attempt to disconnect it anyway though, and then discard the device and attempt a full initial connection
@@ -92,6 +122,8 @@ async function onConnectButtonClick() {
 }
 
 async function connect() {
+  log("connect()");
+
   let currentDevice;
 
   if (device) {
@@ -135,6 +167,8 @@ async function connect() {
 }
 
 function disconnect() {
+  log("disconnect()");
+
   if (device.gatt.connected) {
     // Clear device variable to block automatic reconnection
     const currentDevice = device;
@@ -145,20 +179,24 @@ function disconnect() {
 }
 
 async function onDisconnected() {
-  connectButton.textContent = "Reconnecting...";
   server = null;
   if (device) {
     try {
+      log("onDisconnected() reconnecting");
+      connectButton.textContent = "Reconnecting...";
       server = await connect();
       connectButton.textContent = "Disconnect";
       return;
     } catch (error) {
       if (error instanceof Cancelled) {
+        log("onDisconnected() caught Cancelled");
         return;          
       }
       log(error);
     }
   }
+
+  log("onDisconnected() disconnecting");
   device = null;
   connectButton.textContent = "Connect";
 }
