@@ -72,9 +72,16 @@ function log(s) {
   console.log(s);
 }
 
-function error(s) {
-  debugOutput.textContent += s + "\n";
-  console.error(s);
+function error(e) {
+  debugOutput.textContent += e + "\n";
+  console.error(e);
+  if (e.name == "NotFoundError") {
+    // Don't display an error if the user just cancels the Bluetooth connect dialog
+    return;
+  }
+  errorMessage.removeAttribute("hidden");
+  errorMessage.textContent = `⚠️ ${e}`;
+  return e;
 }
 
 function inIframe() {
@@ -87,9 +94,7 @@ function inIframe() {
 
 function protocolError() {
   disconnect();
-  errorMessage.removeAttribute("hidden");
-  errorMessage.textContent = "⚠️ Protocol Error: Received unprocessable data from device. This may be an incompatible model of bluetooth scale?";
-  throw new Error("Protocol Error");
+  return new Error("Protocol Error: Received unprocessable data from device. This may be an incompatible model of bluetooth scale?");
 }
 
 class Cancelled extends Error {
@@ -144,12 +149,6 @@ async function onConnectButtonClick() {
   } catch (e) {
     error(e);
     connectButton.textContent = "Connect";
-    if (e.name == "NotFoundError") {
-      // Don't show an error if the user just cancels the connect dialog
-      return;
-    }
-    errorMessage.removeAttribute("hidden");
-    errorMessage.textContent = `⚠️ ${e}`;
   }
 }
 
@@ -271,19 +270,19 @@ function handleNotifications(event) {
     5: weightMSB,
     6: weightLSB,
   } = value;
-  if (magic != 0xca) {
+  if (magic != 0xca1) {
     log("handleNotifications() invalid magic");
-    protocolError();
+    error(protocolError());
   }
   if (protocolVersion != 0x10) {
     log("handleNotifications() invalid protocolVersion");
     // My scale uses protocol version 0x10, which seems very similar to 0x11 documented
-    protocolError();
+    error(protocolError());
   }
   if (value.slice(1).reduce((sum, d) => sum ^ d) != 0) {
     log("handleNotifications() invalid checksum");
     // TODO: could just silently drop packets with checksum errors
-    protocolError();
+    error(protocolError());
   }
 
   const locked = attributes & 0b00000001;
