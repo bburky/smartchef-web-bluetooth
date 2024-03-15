@@ -16,7 +16,18 @@ const UNITS = {
 let device;
 let server;
 let wakeLock;
+let installPrompt;
 let debugClickedCount = 0;
+
+// Hook up app's Connect button and output elements
+const installButton = document.getElementById("install");
+const output = document.getElementById("output");
+const debugButton = document.getElementById("debug");
+const debugOutput = document.getElementById("debug-output");
+debugButton.addEventListener("click", onDebugButtonClick);
+const connectButton = document.getElementById("connect");
+connectButton.addEventListener("click", onConnectButtonClick);
+const errorMessage = document.getElementById("error");
 
 // Install service worker, required to meet PWA installability criteria in Chrome
 if ("serviceWorker" in navigator) {
@@ -24,8 +35,6 @@ if ("serviceWorker" in navigator) {
 }
 
 //  PWA install button
-let installPrompt = null;
-const installButton = document.getElementById("install");
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
   installPrompt = event;
@@ -43,15 +52,6 @@ function disableInAppInstallPrompt() {
   installPrompt = null;
   installButton.setAttribute("hidden", "");
 }
-
-// Hook up app's Connect button and output elements
-const output = document.getElementById("output");
-const debugButton = document.getElementById("debug");
-const debugOutput = document.getElementById("debug-output");
-debugButton.addEventListener("click", onDebugButtonClick);
-const connectButton = document.getElementById("connect");
-connectButton.addEventListener("click", onConnectButtonClick);
-const errorMessage = document.getElementById("error");
 
 // Enable Connect button to access app if checks pass
 if (inIframe()) {
@@ -92,9 +92,12 @@ function inIframe() {
   }
 }
 
-function protocolError() {
-  disconnect();
-  return new Error("Protocol Error: Received unprocessable data from device. This may be an incompatible model of bluetooth scale?");
+class ProtocolError extends Error {
+  constructor(message = "", ...args) {
+    super(message, ...args);
+    this.name = "ProtocolError";
+    this.message = message ? message : "Received unprocessable data from device. This may be an incompatible model of bluetooth scale?";
+  }
 }
 
 class Cancelled extends Error {
@@ -254,49 +257,54 @@ async function onDisconnected() {
 }
 
 function handleNotifications(event) {
-  let value = new Uint8Array(event.target.value.buffer);
+  try {
+    let value = new Uint8Array(event.target.value.buffer);
 
-  // Based on:
-  // #1 https://github.com/oliexdev/openScale/issues/496
-  // #2 https://github.com/oliexdev/openScale/files/5224454/OKOK.Protocol.pdf
-  // #3 https://raw.githubusercontent.com/mxiaoguang/chipsea-ble-lib/master/%E8%8A%AF%E6%B5%B7%E8%93%9D%E7%89%99%E7%A7%A4%E4%BA%91%E7%AB%AF%E7%89%88%E9%80%9A%E8%AE%AF%E5%8D%8F%E8%AE%AE%20v3.pdf
-  // and some manual reverse engineering
+    // Based on:
+    // #1 https://github.com/oliexdev/openScale/issues/496
+    // #2 https://github.com/oliexdev/openScale/files/5224454/OKOK.Protocol.pdf
+    // #3 https://raw.githubusercontent.com/mxiaoguang/chipsea-ble-lib/master/%E8%8A%AF%E6%B5%B7%E8%93%9D%E7%89%99%E7%A7%A4%E4%BA%91%E7%AB%AF%E7%89%88%E9%80%9A%E8%AE%AF%E5%8D%8F%E8%AE%AE%20v3.pdf
+    // and some manual reverse engineering
 
-  // This is JavaScript feature is the most wonderfully bizarre way to destructure an array I've ever used
-  const {
-    0: magic,
-    1: protocolVersion,
-    3: attributes, // This mostly seems to decode according to Table 1 in document #2 linked above
-    5: weightMSB,
-    6: weightLSB,
-  } = value;
-  if (magic != 0xca1) {
-    log("handleNotifications() invalid magic");
-    error(protocolError());
+    // This is JavaScript feature is the most wonderfully bizarre way to destructure an array I've ever used
+    const {
+      0: magic,
+      1: protocolVersion,
+      3: attributes, // This mostly seems to decode according to Table 1 in document #2 linked above
+      5: weightMSB,
+      6: weightLSB,
+    } = value;
+    if (magic != 0xca) {
+      log("handleNotifications() invalid magic");
+      throw new ProtocolError();
+    }
+    if (protocolVersion != 0x10) {
+      log("handleNotifications() invalid protocolVersion");
+      // My scale uses protocol version 0x10, which seems very similar to 0x11 documented
+      throw new ProtocolError();
+    }
+    if (value.slice(1).reduce((sum, d) => sum ^ d) != 0) {
+      log("handleNotifications() invalid checksum");
+      // TODO: could just silently drop packets with checksum errors
+      throw new ProtocolError();
+    }
+
+    const locked = attributes & 0b00000001;
+    const decimals = DECIMALS[attributes & 0b00000110];
+    const unit = UNITS[attributes & 0b01111000];
+    const sign = attributes & 0b10000000 ? -1 : 1;
+
+    const weight = (
+      (((weightMSB << 8) + weightLSB) / 10 ** decimals) *
+      sign
+    ).toFixed(decimals);
+
+    // log(`handleNotifications() raw data ${[...value].map(e => e.toLocaleString('en', {minimumIntegerDigits:3}))}`);
+
+    output.textContent = `${weight} ${unit}`;
+    output.className = locked ? "locked" : "";
+  } catch (e) {
+    disconnect();
+    error(e);
   }
-  if (protocolVersion != 0x10) {
-    log("handleNotifications() invalid protocolVersion");
-    // My scale uses protocol version 0x10, which seems very similar to 0x11 documented
-    error(protocolError());
-  }
-  if (value.slice(1).reduce((sum, d) => sum ^ d) != 0) {
-    log("handleNotifications() invalid checksum");
-    // TODO: could just silently drop packets with checksum errors
-    error(protocolError());
-  }
-
-  const locked = attributes & 0b00000001;
-  const decimals = DECIMALS[attributes & 0b00000110];
-  const unit = UNITS[attributes & 0b01111000];
-  const sign = attributes & 0b10000000 ? -1 : 1;
-
-  const weight = (
-    (((weightMSB << 8) + weightLSB) / 10 ** decimals) *
-    sign
-  ).toFixed(decimals);
-
-  // log(`handleNotifications() raw data ${[...value].map(e => e.toLocaleString('en', {minimumIntegerDigits:3}))}`);
-
-  output.textContent = `${weight} ${unit}`;
-  output.className = locked ? "locked" : "";
 }
