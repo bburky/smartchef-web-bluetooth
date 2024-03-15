@@ -1,13 +1,11 @@
 const SCALE_SERVICE_UUID = 0xfff0;
 const SCALE_CHARACTERISTIC_UUID = 0xfff1;
-
 const DECIMALS = {
   0b000: 0,
   0b010: 1,
   0b100: 2,
   0b110: 3,
 };
-
 const UNITS = {
   0b0000000: "g",
   0b0001000: "ml",
@@ -17,7 +15,8 @@ const UNITS = {
 
 let device;
 let server;
-let wakeLock
+let wakeLock;
+let debugClickedCount = 0;
 
 // Install service worker, required to meet PWA installability criteria in Chrome
 if ("serviceWorker" in navigator) {
@@ -45,7 +44,7 @@ function disableInAppInstallPrompt() {
   installButton.setAttribute("hidden", "");
 }
 
-// Hook up app's Connect button and output element
+// Hook up app's Connect button and output elements
 const output = document.getElementById("output");
 const debugButton = document.getElementById("debug");
 const debugOutput = document.getElementById("debug-output");
@@ -54,26 +53,18 @@ const connectButton = document.getElementById("connect");
 connectButton.addEventListener("click", onConnectButtonClick);
 const errorMessage = document.getElementById("error");
 
+// Enable Connect button to access app if checks pass
 if (inIframe()) {
   document.body.className = "iframed";
-
   errorMessage.textContent = "⚠️ Bluetooth cannot be accessed in an embedded website. ";
   const link = document.createElement("a");
   link.target = "_top"; // Cannot use _blank, Glitch iframes do not have allow-popups permissions
   link.href = document.location;
-  link.textContent = "Click here to open in a new window."
+  link.textContent = "Click here to open in a new window.";
   errorMessage.appendChild(link);
 } else if ("bluetooth" in navigator) {
   connectButton.removeAttribute("disabled");
-  errorMessage.setAttribute("hidden", ""); 
-}
-
-function inIframe () {
-    try {
-        return window.self !== window.top;
-    } catch (e) {
-        return true;
-    }
+  errorMessage.setAttribute("hidden", "");
 }
 
 function log(s) {
@@ -86,38 +77,46 @@ function error(s) {
   console.error(s);
 }
 
+function inIframe() {
+  try {
+    return window.self !== window.top;
+  } catch (e) {
+    return true;
+  }
+}
+
 function protocolError() {
   disconnect();
-  alert("Protocol Error: Received unprocessable data from device\n\nThis may be an incompatible model of bluetooth scale?");
+  errorMessage.removeAttribute("hidden");
+  errorMessage.textContent = "⚠️ Protocol Error: Received unprocessable data from device. This may be an incompatible model of bluetooth scale?";
   throw new Error("Protocol Error");
 }
 
 class Cancelled extends Error {
   constructor(message = "", ...args) {
     super(message, ...args);
-    this.message = "Cancelled " + message;
+    this.name = "Cancelled";
   }
 }
 
-let debugClickedCount = 0;
+// Show a debug button after 4 clicks
+// Button is invisible below the top right text
 function onDebugButtonClick() {
   debugClickedCount++;
   if (debugClickedCount == 3) {
     debugButton.className = "";
   } else if (debugClickedCount >= 4) {
     toggleDebug();
-  }  
+  }
 }
-
 function toggleDebug() {
   const debugVisible = !(debugClickedCount & 1);
   if (debugVisible) {
     debugOutput.removeAttribute("hidden");
   } else {
-     debugOutput.setAttribute("hidden", ""); 
+    debugOutput.setAttribute("hidden", "");
   }
 }
-
 
 async function onConnectButtonClick() {
   // Hide any visible error message
@@ -129,7 +128,7 @@ async function onConnectButtonClick() {
     return;
   } else if (device) {
     log("onConnectButtonClick() disconnect during reconnection");
-    
+
     // The user is likely attempting to disconect during reconnection
     // The API doesn't actually allow cancelling a connect() call: https://issues.chromium.org/issues/40502943
     // Attempt to disconnect it anyway though, and then discard the device and attempt a full initial connection
@@ -153,12 +152,12 @@ async function onConnectButtonClick() {
     errorMessage.textContent = `⚠️ ${e}`;
   }
 }
-  
+
 async function connect() {
   log("connect()");
 
   let currentDevice;
-  
+
   if (device) {
     currentDevice = device;
   } else {
@@ -195,7 +194,9 @@ async function connect() {
 
   const service = await server.getPrimaryService(SCALE_SERVICE_UUID);
 
-  const characteristic = await service.getCharacteristic(SCALE_CHARACTERISTIC_UUID);
+  const characteristic = await service.getCharacteristic(
+    SCALE_CHARACTERISTIC_UUID
+  );
   characteristic.addEventListener(
     "characteristicvaluechanged",
     handleNotifications
@@ -209,7 +210,7 @@ async function connect() {
       log("Wake Lock has been released");
     });
   }
-  
+
   log("connect() succeeded");
 }
 
@@ -239,7 +240,7 @@ async function onDisconnected() {
     } catch (e) {
       if (e instanceof Cancelled) {
         log("onDisconnected() caught Cancelled");
-        return;          
+        return;
       }
       error(e);
     }
@@ -285,15 +286,16 @@ function handleNotifications(event) {
     protocolError();
   }
 
-  const locked   =          attributes & 0b00000001;
+  const locked = attributes & 0b00000001;
   const decimals = DECIMALS[attributes & 0b00000110];
-  const unit     =    UNITS[attributes & 0b01111000];
-  const sign     =          attributes & 0b10000000 ? -1 : 1;
+  const unit = UNITS[attributes & 0b01111000];
+  const sign = attributes & 0b10000000 ? -1 : 1;
 
-  const weight = (((weightMSB << 8) + weightLSB) / 10 ** decimals * sign).toFixed(
-    decimals
-  );
-  
+  const weight = (
+    (((weightMSB << 8) + weightLSB) / 10 ** decimals) *
+    sign
+  ).toFixed(decimals);
+
   // log(`handleNotifications() raw data ${[...value].map(e => e.toLocaleString('en', {minimumIntegerDigits:3}))}`);
 
   output.textContent = `${weight} ${unit}`;
