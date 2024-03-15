@@ -1,6 +1,6 @@
 # Unofficial [Smart Chef][1] Bluetooth smart scale webapp
 
-Simple webapp to display the value from a [Smart Chef][1] Bluetooth scale using [Web Bluetooth][2]. Tested with the [500g][3] and [3000g][4] models, but could possibly be extended to support other Bluetooth scales using the same protocol.
+Simple webapp to display the value from a [Smart Chef][1] Bluetooth scale using [Web Bluetooth][2]. Tested with the [500g][3] and [3000g][4] scales, model RX402b20, but could possibly be extended to support other Bluetooth scales using the same protocol.
 
 I had no end of trouble using the official [Smart Chef Android app][5] (but I honestly haven't even tried it recently), so I wrote this small PWA as a replacement phone app. At some point I may reimplement other features in the official app, like a log or the pour over coffee timer. I'll probably make separate dedicated PWAs for these.
 
