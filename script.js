@@ -8,7 +8,7 @@ const DECIMALS = {
 };
 const UNITS = {
   0b0000000: "g",
-  0b0001000: "ml",
+  0b0001000: "mL",
   0b1001000: "lb", // Chipsea-BLE, marked "ib"
   0b0110000: "lb", // smartchef, marked "ib"
 };
@@ -289,19 +289,26 @@ function handleNotifications(event) {
       throw new ProtocolError();
     }
 
-    const locked = attributes & 0b00000001;
+    const locked =            attributes & 0b00000001;
     const decimals = DECIMALS[attributes & 0b00000110];
-    const unit = UNITS[attributes & 0b01111000];
-    const sign = attributes & 0b10000000 ? -1 : 1;
+    let unit =          UNITS[attributes & 0b01111000];
+    const sign =              attributes & 0b10000000 ? -1 : 1;
 
-    const weight = (
-      (((weightMSB << 8) + weightLSB) / 10 ** decimals) *
-      sign
-    ).toFixed(decimals);
+    let weight = (((weightMSB << 8) + weightLSB) / 10 ** decimals) * sign;
+    let weightStr = weight.toFixed(decimals);
+    
+    if (unit == "mL") {
+      weight *= 0.033814;
+      unit = "fl oz";
+      
+      const precision = weight.toFixed(decimals).length - 1;
+      weightStr
 
+    }
+    
     // log(`handleNotifications() raw data ${[...value].map(e => e.toLocaleString('en', {minimumIntegerDigits:3}))}`);
 
-    output.textContent = `${weight} ${unit}`;
+    output.textContent = `${weight.toFixed(decimals)} ${unit}`;
     output.className = locked ? "locked" : "";
   } catch (e) {
     disconnect();
