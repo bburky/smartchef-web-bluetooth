@@ -293,7 +293,6 @@ function handleNotifications(event) {
     const decimals = DECIMALS[attributes & 0b00000110];
     let unit =          UNITS[attributes & 0b01111000];
     const sign =              attributes & 0b10000000 ? -1 : 1;
-    
 
     let weight = (((weightMSB << 8) + weightLSB) / 10 ** decimals) * sign;
     let weightStr = weight.toFixed(decimals);
