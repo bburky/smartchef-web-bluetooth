@@ -293,17 +293,17 @@ function handleNotifications(event) {
     const decimals = DECIMALS[attributes & 0b00000110];
     let unit =          UNITS[attributes & 0b01111000];
     const sign =              attributes & 0b10000000 ? -1 : 1;
+    
 
     let weight = (((weightMSB << 8) + weightLSB) / 10 ** decimals) * sign;
     let weightStr = weight.toFixed(decimals);
+    const precision = weightStr.length - 1;
     
+    // TODO add selector UI for units    
     if (unit == "mL") {
       weight *= 0.033814;
       unit = "fl oz";
-      
-      const precision = weight.toFixed(decimals).length - 1;
-      weightStr
-
+      weightStr = weight.toPrecision(precision)
     }
     
     // log(`handleNotifications() raw data ${[...value].map(e => e.toLocaleString('en', {minimumIntegerDigits:3}))}`);
