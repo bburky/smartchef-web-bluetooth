@@ -308,7 +308,7 @@ function handleNotifications(event) {
     
     // log(`handleNotifications() raw data ${[...value].map(e => e.toLocaleString('en', {minimumIntegerDigits:3}))}`);
 
-    output.textContent = `${weight.toFixed(decimals)} ${unit}`;
+    output.textContent = `${weightStr} ${unit}`;
     output.className = locked ? "locked" : "";
   } catch (e) {
     disconnect();

@@ -8,7 +8,7 @@ Features:
 
 - Shows value from scale, with correct units and decimal precision
 - Automatic reconnection on Bluetooth disconnection
-- Installable as a Portable Web Application: home screen icon, full screen UI, offline support
+- Installable as a Portable Web Application: home screen icon, full screen UI, ~~offline support~~
 - [Screen Wake Lock][6] to prevent the screen from going off while you use the scale
 
 [1]: https://smartchef.me/
