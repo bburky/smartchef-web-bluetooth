@@ -106,7 +106,7 @@ class Cancelled extends Error {
   }
 }
 
-// Show a debug button after 4 clicks
+// Show a debug button after 3 clicks and activate on 4th click
 // Button is invisible below the top right text
 function onDebugButtonClick() {
   debugClickedCount++;
@@ -117,8 +117,7 @@ function onDebugButtonClick() {
   }
 }
 function toggleDebug() {
-  const debugVisible = !(debugClickedCount & 1);
-  if (debugVisible) {
+  if (debugOutput.hasAttribute("hidden")) {
     debugOutput.removeAttribute("hidden");
   } else {
     debugOutput.setAttribute("hidden", "");
@@ -144,8 +143,8 @@ async function onConnectButtonClick() {
   }
 
   log("onConnectButtonClick() connect");
+  connectButton.textContent = "Connecting...";
   try {
-    connectButton.textContent = "Connecting...";
     await connect();
     connectButton.textContent = "Disconnect";
   } catch (e) {
@@ -185,7 +184,7 @@ async function connect() {
   const newServer = await currentDevice.gatt.connect();
   log("connect() gatt.connect() succeeded");
   // It's impossible to cancel the connect() call, the browser will attempt to reconnect forever
-  // Therefore this app will abandon calls to connect sometimes, but that means that two will run in parallel
+  // Therefore this app will abandon calls to connect sometimes, but that means that multiple connect attempts may run in parallel
   // Detect if an abandoned connect() succeeds and throw an error to indicate it was cancelled
   if (!device || server) {
     currentDevice.gatt.disconnect();
