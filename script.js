@@ -294,7 +294,9 @@ function handleNotifications(event) {
 
     let weight = (((weightMSB << 8) + weightLSB) / 10 ** decimals) * sign;
     let weightStr = weight.toFixed(decimals);
-    const precision = weightStr.length - 1;
+
+    // Subtract one to skip the decimal point, unless no decimals
+    const precision = decimals == 0 ? weightStr.length : weightStr.length - 1
     
     // TODO add a drop down UI to select units
     // For now, just replace the useless mL unit (same number as g, why does it exist?) with fl oz
