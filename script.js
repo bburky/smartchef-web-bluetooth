@@ -299,7 +299,8 @@ function handleNotifications(event) {
     let weightStr = weight.toFixed(decimals);
     const precision = weightStr.length - 1;
     
-    // TODO add selector UI for units    
+    // TODO add a drop down UI to select units
+    // For now, just replace the useless mL unit (same number as g, why does it exist?) with fl oz
     if (unit == "mL") {
       weight *= 0.033814;
       unit = "fl oz";
