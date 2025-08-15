@@ -10,7 +10,7 @@ Features:
 - Automatic reconnection on Bluetooth disconnection
 - Installable as a Portable Web Application: home screen icon, full screen UI, ~~offline support~~
 - [Screen Wake Lock][6] to prevent the screen from going off while you use the scale
-- _mL_ unit replaced with _fl oz_ (the _mL_ unit was effectively a duplicage of _g_)
+- _mL_ unit replaced with _fl oz_ (the _mL_ unit was effectively a duplicate of _g_)
 
 [1]: https://smartchef.me/
 [2]: https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API
