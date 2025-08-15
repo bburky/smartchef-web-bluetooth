@@ -10,6 +10,7 @@ Features:
 - Automatic reconnection on Bluetooth disconnection
 - Installable as a Portable Web Application: home screen icon, full screen UI, ~~offline support~~
 - [Screen Wake Lock][6] to prevent the screen from going off while you use the scale
+- mL unit replaced with fl oz (the mL unit was effectively a duplicage of g)
 
 [1]: https://smartchef.me/
 [2]: https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API
@@ -17,6 +18,10 @@ Features:
 [4]: https://www.amazon.com/dp/B009LCM90C
 [5]: https://play.google.com/store/apps/details?id=com.reflex.ww.smartfoodscale&hl=en_US&gl=US
 [6]: https://developer.mozilla.org/en-US/docs/Web/API/Screen_Wake_Lock_API
+
+Bugs:
+
+- offline PWA isn't quite finished
 
 There is a hidden debug 🐞 button that can be accessed by clicking under the top-right text on screen 4 times. This will show some logs on screen. The logs are also written to the JS console log, but this is useful to see the logs on mobile.
 
